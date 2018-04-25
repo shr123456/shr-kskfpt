@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="LowPressureCurveMapper">
+    <!--表名 -->
+    <sql id="tableName">
+        COLLECT_BASE_INFO_LOWPRESSURE
+    </sql>
+
+    <!-- 字段 -->
+    <sql id="Field">
+        COLLECT_TIME,
+        A_ELECTRICITY,
+        B_ELECTRICITY,
+        C_ELECTRICITY,
+        A_POWER_FACTOR,
+        B_POWER_FACTOR,
+        C_POWER_FACTOR,
+        TOTAL_POWER_FACTOR,
+        TOTAL_P_AT_EE,
+        TOTAL_R_AT_EE,
+        TOTAL_AP_A_EE,
+        TOTAL_AP_REAT_EE,
+        A_VOLTAGE,
+        B_VOLTAGE,
+        C_VOLTAGE,
+        TOTAL_AP_POWER,
+        A_AP_POWER,
+        B_AP_POWER,
+        C_AP_POWER,
+        TOTAL_REACTIVE_POWER,
+        A_REACTIVE_POWER,
+        B_REACTIVE_POWER,
+        C_REACTIVE_POWER,
+        TOTAL_ACTIVE_POWER,
+        A_ACTIVE_POWER,
+        B_ACTIVE_POWER,
+        C_ACTIVE_POWER,
+        TOTAL_P_REAT_EE,
+        TOTAL_R_REAT_EE,
+        TOTAL_AT_EE,
+        TIP_TOTAL_AT_EE,
+        PEAK_TOTAL_AT_EE,
+        FLAT_TOTAL_AT_EE,
+        VALLEY_TOTAL_AT_EE,
+        TIP_TOTAL_AP_REAT_EE,
+        PEAK_TOTAL_AP_REAT_EE,
+        FLAT_TOTAL_AP_REAT_EE,
+        VALLEY_TOTAL_AP_REAT_EE,
+        TIP_TOTAL_AP_A_EE,
+        PEAK_TOTAL_AP_A_EE,
+        FLAT_TOTAL_AP_A_EE,
+        VALLEY_TOTAL_AP_A_EE,
+        FREQUENCY,
+        UAB_LINE_VOLTAGE,
+        UBC_LINE_VOLTAGE,
+        UAC_LINE_VOLTAGE,
+        LINE_CURRENT,
+        PHASE_CURRENT,
+        EQUIPMENT_ID
+    </sql>
+
+    <!-- 字段值 -->
+    <sql id="FieldValue">
+        #{COLLECT_TIME},
+        #{A_ELECTRICITY},
+        #{B_ELECTRICITY},
+        #{C_ELECTRICITY},
+        #{A_POWER_FACTOR},
+        #{B_POWER_FACTOR},
+        #{C_POWER_FACTOR},
+        #{TOTAL_POWER_FACTOR},
+        #{TOTAL_P_AT_EE},
+        #{TOTAL_R_AT_EE},
+        #{TOTAL_AP_A_EE},
+        #{TOTAL_AP_REAT_EE},
+        #{A_VOLTAGE},
+        #{B_VOLTAGE},
+        #{C_VOLTAGE},
+        #{TOTAL_AP_POWER},
+        #{A_AP_POWER},
+        #{B_AP_POWER},
+        #{C_AP_POWER},
+        #{TOTAL_REACTIVE_POWER},
+        #{A_REACTIVE_POWER},
+        #{B_REACTIVE_POWER},
+        #{C_REACTIVE_POWER},
+        #{TOTAL_ACTIVE_POWER},
+        #{A_ACTIVE_POWER},
+        #{B_ACTIVE_POWER},
+        #{C_ACTIVE_POWER},
+        #{TOTAL_P_REAT_EE},
+        #{TOTAL_R_REAT_EE},
+        #{TOTAL_AT_EE},
+        #{TIP_TOTAL_AT_EE},
+        #{PEAK_TOTAL_AT_EE},
+        #{FLAT_TOTAL_AT_EE},
+        #{VALLEY_TOTAL_AT_EE},
+        #{TIP_TOTAL_AP_REAT_EE},
+        #{PEAK_TOTAL_AP_REAT_EE},
+        #{FLAT_TOTAL_AP_REAT_EE},
+        #{VALLEY_TOTAL_AP_REAT_EE},
+        #{TIP_TOTAL_AP_A_EE},
+        #{PEAK_TOTAL_AP_A_EE},
+        #{FLAT_TOTAL_AP_A_EE},
+        #{VALLEY_TOTAL_AP_A_EE},
+        #{FREQUENCY},
+        #{UAB_LINE_VOLTAGE},
+        #{UBC_LINE_VOLTAGE},
+        #{UAC_LINE_VOLTAGE},
+        #{LINE_CURRENT},
+        #{PHASE_CURRENT},
+        #{EQUIPMENT_ID}
+    </sql>
+
+
+    <!-- 获取总数 -->
+    <select id="findThreePhaseCurrent" parameterType="pd" resultType="pd">
+        SELECT
+        AVG(a_electricity) AS a_electricity,
+        AVG(b_electricity) AS b_electricity,
+        AVG(c_electricity) AS c_electricity,
+        AVG(A_VOLTAGE) AS A_VOLTAGE,
+        AVG(B_VOLTAGE) AS B_VOLTAGE,
+        AVG(C_VOLTAGE) AS C_VOLTAGE,
+        AVG(total_p_at_ee) AS total_p_at_ee,
+        AVG(total_power_factor) AS total_power_factor,
+        AVG(total_active_power) AS total_active_power,
+        AVG(total_reactive_power) AS total_reactive_power,
+        <if test="dataType==1"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%h') AS collect_time
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%m-%d') AS collect_time
+        </if>
+        FROM
+        collect_base_info_lowpressure
+        WHERE
+        <if test="dataType==1"><!-- 按日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==2"><!-- 按7日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL -6 DAY
+            AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 DAY
+        </if>
+        <if test="dataType==3"><!-- 按月查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 MONTH
+        </if>
+        <!--AND  collect_time < str_to_date(NOW(),'%Y-%m-%d %H')-->
+        AND equipment_id = #{id}
+        <if test="dataType==1"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d %h')
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d')
+        </if>
+
+
+    </select>
+    <!-- 获取总数 -->
+    <select id="selectListeqlow" parameterType="page" resultType="pd">
+        select * from equ_low_pressure_cabinet WHERE DELETED =0 ORDER BY create_time DESC
+    </select>
+    <!-- 获取最新的设备 -->
+    <select id="selectEqulowbNewId" parameterType="page" resultType="pd">
+        select id,equipment_name,if_into_line from equ_low_pressure_cabinet WHERE create_time=(SELECT  MAX(create_time) FROM equ_low_pressure_cabinet) AND deleted=0
+    </select>
+    <!-- 获取设备 -->
+    <select id="selectEqulowbList" parameterType="page" resultType="pd">
+        select id,equipment_name,if_into_line from equ_low_pressure_cabinet WHERE id=#{id} AND deleted=0
+    </select>
+</mapper>

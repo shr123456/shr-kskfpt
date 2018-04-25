@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ElectricalRoomMapper">
+
+	<resultMap type="ElectricalRoom" id="electricalRoom">
+		<id column="ROOM_ID" property="ROOM_ID"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+	</resultMap>
+
+	<!--表名 -->
+	<sql id="tableName">
+		ELECTRICAL_ROOM
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+		ROOM_ID,
+		CUSTOMER_ID,	
+		ELECTRICAL_ROOM_CODE,	
+		ELECTRICAL_ROOM_NAME,	
+		CREATOR,	
+		CREATE_TIME,	
+		TEMPERATURE,	
+		DAMPNESS,	
+		CHARGER,	
+		CHARGE_TEL,	
+		REMARK,	
+		PHOTO_URL,	
+		UPDATER,	
+		UPDATE_TIME,	
+		DELETED
+	</sql>
+
+
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{CUSTOMER_ID},	
+		#{ELECTRICAL_ROOM_CODE},	
+		#{ELECTRICAL_ROOM_NAME},	
+		#{CREATOR},	
+		#{CREATE_TIME},	
+		#{TEMPERATURE},	
+		#{DAMPNESS},	
+		#{CHARGER},	
+		#{CHARGE_TEL},	
+		#{REMARK},	
+		#{PHOTO_URL},	
+		#{UPDATER},	
+		#{UPDATE_TIME},	
+		#{DELETED}
+	</sql>
+	
+	<!-- 新增-->
+	<insert id="save" parameterType="pd">
+		insert into 
+	<include refid="tableName"></include>
+		(
+		CUSTOMER_ID,
+		ELECTRICAL_ROOM_CODE,
+		ELECTRICAL_ROOM_NAME,
+		CREATOR,
+		CREATE_TIME,
+		TEMPERATURE,
+		DAMPNESS,
+		CHARGER,
+		CHARGE_TEL,
+		REMARK,
+		PHOTO_URL,
+		UPDATER,
+		UPDATE_TIME,
+		DELETED
+		) values (
+	<include refid="FieldValue"></include>
+		)
+	</insert>
+	
+	<!-- 删除-->
+	<delete id="delete" parameterType="pd">
+		delete from
+		<include refid="tableName"></include>
+		where
+		ROOM_ID = #{ROOM_ID}
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="edit" parameterType="pd">
+		update
+		<include refid="tableName"></include>
+		set
+			CUSTOMER_ID = #{CUSTOMER_ID},
+			ELECTRICAL_ROOM_CODE = #{ELECTRICAL_ROOM_CODE},
+			ELECTRICAL_ROOM_NAME = #{ELECTRICAL_ROOM_NAME},
+			TEMPERATURE = #{TEMPERATURE},
+			DAMPNESS = #{DAMPNESS},
+			CHARGER = #{CHARGER},
+			CHARGE_TEL = #{CHARGE_TEL},
+			REMARK = #{REMARK},
+			PHOTO_URL = #{PHOTO_URL},
+			UPDATER = #{UPDATER},
+			UPDATE_TIME = #{UPDATE_TIME}
+		where
+		ROOM_ID = #{ROOM_ID}
+	</update>
+	
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where
+		ROOM_ID = #{ROOM_ID}
+	</select>
+	
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		select
+		<include refid="Field"></include>
+		,u.USERNAME
+		from 
+		<include refid="tableName"></include>
+		LEFT join SYS_USER u on u.USER_ID=CUSTOMER_ID
+
+		where 1=1
+		<if test="pd.keywords!= null and pd.keywords != ''"><!-- 关键词检索 -->
+			and
+				(
+			ELECTRICAL_ROOM_NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+
+				<!--	根据需求自己加检索条件
+					字段1 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+					 or 
+					字段2 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				-->
+				)
+		</if>
+		order by UPDATE_TIME desc
+	</select>
+	
+	<!-- 列表(全部) -->
+	<select id="listAll" parameterType="pd" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+	</select>
+
+	<!-- 列表(全部) -->
+	<select id="listByCustomerId" parameterType="pd" resultType="electricalRoom">
+		select ROOM_ID,ELECTRICAL_ROOM_NAME
+		from
+		<include refid="tableName"></include>
+	</select>
+	
+	<!-- 批量删除 -->
+	<delete id="deleteAll" parameterType="String">
+		delete from
+		<include refid="tableName"></include>
+		where
+		ROOM_ID in
+		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">
+                 #{item}
+		</foreach>
+	</delete>
+
+</mapper>

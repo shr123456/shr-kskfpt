@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquTransformerMonitoringMapper">
+
+	<resultMap type="EquTtransformerMonitoring" id="equTtransformerMonitoring">
+		<id column="ID" property="ID"/>
+		<result column="EQUIPMENT_NAME" property="EQUIPMENT_NAME"/>
+		<result column="CAPACITY" property="CAPACITY"/>
+		<result column="LOW_EQUIPMENT_NAME" property="LOW_EQUIPMENT_NAME"/>
+		<result column="LOW_ID" property="LOW_ID"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+		<result column="A_WINDING_TEMPERATURE" property="A_WINDING_TEMPERATURE"/>
+		<result column="B_WINDING_TEMPERATURE" property="B_WINDING_TEMPERATURE"/>
+		<result column="C_WINDING_TEMPERATURE" property="C_WINDING_TEMPERATURE"/>
+		<result column="A_CORE_TEMPERATURE" property="A_CORE_TEMPERATURE"/>
+		<result column="B_CORE_TEMPERATURE" property="B_CORE_TEMPERATURE"/>
+		<result column="C_CORE_TEMPERATURE" property="C_CORE_TEMPERATURE"/>
+	</resultMap>
+
+
+	<!-- 通过ID获取变压器数据 -->
+	<select id="getTransformerLowListCount" parameterType="pd" resultType="equTtransformerMonitoring">
+		select l.ID as LOW_ID,l.EQUIPMENT_NAME as LOW_EQUIPMENT_NAME,r.ELECTRICAL_ROOM_NAME,t.ID,t.EQUIPMENT_NAME,t.CAPACITY
+		,A_WINDING_TEMPERATURE,B_WINDING_TEMPERATURE,C_WINDING_TEMPERATURE
+		,A_CORE_TEMPERATURE,B_CORE_TEMPERATURE,C_CORE_TEMPERATURE
+		from equ_transformer t
+		left join equ_low_pressure_cabinet l on l.transformer_id=t.id
+		left join electrical_room r on r.room_id=l.electrical_room_id
+		left join temperature_gathering tg on t.id=tg.transformer_id
+        where l.if_into_line=1
+
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and t.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+
+		GROUP BY t.id
+	</select>
+
+	<!-- 通过ID获取电量数据-->
+	<select id="getTransformerLowList" parameterType="pd" resultMap="equTtransformerMonitoring">
+		select max(TOTAL_P_AT_EE) as TOTAL_P_AT_EE,min(il.TOTAL_P_AT_EE) as TOTAL_P_AT_EE_MIN,t.ID as ID,l.EQUIPMENT_NAME as LOW_EQUIPMENT_NAME from collect_base_info_lowpressure il
+		left join equ_low_pressure_cabinet l on l.ID=il.equipment_id
+		left join equ_transformer t on l.transformer_id=t.id
+		where il.equipment_id in
+         (    select l.ID as LOW_ID from equ_transformer t
+				left join equ_low_pressure_cabinet l on l.transformer_id=t.id
+				where l.if_into_line=1 and l.ID is not null
+         )
+		group by equipment_id
+		order by t.ID asc
+
+	</select>
+
+
+	<!-- 通过ID获取变压器数据 -->
+	<select id="getTransformerHighListCount" parameterType="pd" resultType="equTtransformerMonitoring">
+		select h.ID as LOW_ID,h.EQUIPMENT_NAME as LOW_EQUIPMENT_NAME,r.ELECTRICAL_ROOM_NAME
+		,t.ID,t.EQUIPMENT_NAME,t.CAPACITY
+		,A_WINDING_TEMPERATURE,B_WINDING_TEMPERATURE,C_WINDING_TEMPERATURE
+		,A_CORE_TEMPERATURE,B_CORE_TEMPERATURE,C_CORE_TEMPERATURE
+		from  equ_transformer t
+		left join equ_high_pressure_cabinet h on h.transformer_id=t.id
+		left join electrical_room r on r.room_id=h.electrical_room_id
+		left join temperature_gathering tg on t.id=tg.transformer_id
+		where h.if_into_line=1
+
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and t.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+
+		GROUP BY t.id
+	</select>
+
+	<!-- 通过ID获取电量数据-->
+	<select id="getTransformerHighList" parameterType="pd" resultMap="equTtransformerMonitoring">
+		select max(ih.TOTAL_P_AT_EE) as TOTAL_P_AT_EE,min(ih.TOTAL_P_AT_EE) as TOTAL_P_AT_EE_MIN,t.ID as ID,h.EQUIPMENT_NAME as LOW_EQUIPMENT_NAME
+		from collect_base_info_highpressure ih
+		left join equ_high_pressure_cabinet h on h.ID=ih.equipment_id
+		left join equ_transformer t on h.transformer_id=t.id
+		where ih.equipment_id in
+		(
+		select h.ID as LOW_ID from equ_transformer t
+		left join equ_high_pressure_cabinet h on h.transformer_id=t.id
+		where h.if_into_line=1 and h.ID is not null
+		)
+		group by equipment_id
+		order by t.ID asc
+	</select>
+
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select
+		ID,
+	    EQUIPMENT_NAME,
+		EQUIPMENT_CODE,
+		INSTALLATION_POSITION,
+		EQUIPMENT_VERSION,
+		HIGH_RATED_CURRENT,
+		LOW_RATED_CURRENT,
+		HIGH_RATED_VOLTAGE,
+		LOW_RATED_VOLTAGE,
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		CAPACITY,
+		r.ELECTRICAL_ROOM_NAME
+		from
+		equ_transformer t
+		left join electrical_room r on r.room_id=ELECTRICAL_ROOM_ID
+		where
+		ID = #{ID}
+	</select>
+
+
+</mapper>

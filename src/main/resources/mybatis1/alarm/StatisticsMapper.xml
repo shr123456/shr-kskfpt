@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="StatisticsMapper">
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		SELECT *FROM (SELECT a.id,a.meter_name,
+		IFNULL(a.limitcount,0) AS limitcount,
+		IFNULL(b.stacount,0) AS stacount,
+		(IFNULL(a.limitcount,0) + IFNULL(b.stacount,0)) AS heji FROM
+		(select t.id, t.meter_name,COUNT(al.LIMIT_ID) as limitcount from equ_smart_meter t
+		LEFT JOIN alarm_limit al on t.id=al.METER_ID
+		GROUP BY al.METER_ID) a
+		LEFT JOIN
+		(select t.id,t.meter_name, COUNT(al.POWEROUTAGES_ID) as stacount from equ_smart_meter t
+		LEFT JOIN alarm_power_outages al on t.id=al.METER_ID
+		GROUP BY al.METER_ID) b ON b.id=a.id where 1=1
+		<if test="pd.keywords!= null and pd.keywords!= ''"><!-- 关键词检索 -->        AND
+			(a
+			.meter_name LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%'))
+		</if>
+		ORDER BY meter_name<if test="pd.keywords2!= null and pd.keywords2!= ''">
+		<if test="pd.keywords2 == 1">
+			ORDER BY meter_name
+		</if>
+		<if test="pd.keywords2 == 2">
+			ORDER BY limitcount
+		</if>
+		<if test="pd.keywords2 == 3">
+			ORDER BY stacount
+		</if>
+		<if test="pd.keywords2 == 4">
+			ORDER BY heji
+		</if>
+	</if>
+	<if test="pd.keywords3!= null and pd.keywords3!= ''">
+		<if test="pd.keywords3 == 1">
+        desc
+		</if>
+		<if test="pd.keywords3 == 2">
+		ASC
+	   </if>
+	</if>
+		<if test="pd.keywords2 == null or pd.keywords2 == ''">
+			ORDER BY heji
+		</if>
+		<if test="pd.keywords3 == null or pd.keywords3 == ''">
+			DESC
+		</if>
+		) c  WHERE (limitcount !=0 OR stacount !=0)
+	</select>
+	
+</mapper>

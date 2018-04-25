@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquHighPCMapper">
+	
+	<!--表名 -->
+	<sql id="tableName">
+		EQU_HIGH_PRESSURE_CABINET
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+		ID,	
+		ELECTRICAL_ROOM_ID,	
+		EQUIPMENT_NAME,	
+		EQUIPMENT_CODE,	
+		LOOP_NAME,	
+		INSTALLATION_POSITION,	
+		EQUIPMENT_VERSION,	
+		RATED_CURRENT,	
+		RATED_VOLTAGE,	
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		TRANSFORMER_ID,
+		IF_INTO_LINE,	
+		CREATOR,	
+		CREATE_TIME,	
+		UPDATER,	
+		UPDATE_TIME,	
+		DELETED
+	</sql>
+	
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{ELECTRICAL_ROOM_ID},	
+		#{EQUIPMENT_NAME},	
+		#{EQUIPMENT_CODE},	
+		#{LOOP_NAME},	
+		#{INSTALLATION_POSITION},	
+		#{EQUIPMENT_VERSION},	
+		#{RATED_CURRENT},	
+		#{RATED_VOLTAGE},	
+		#{MAKE_TIME},	
+		#{BRAND},	
+		#{MANUFACTURER},	
+		#{IF_INTO_LINE},
+		#{TRANSFORMER_ID},
+		#{CREATOR},	
+		#{CREATE_TIME},	
+		#{UPDATER},	
+		#{UPDATE_TIME},	
+		#{DELETED}
+	</sql>
+	
+	<!-- 新增-->
+	<insert id="save" parameterType="pd">
+		insert into 
+	<include refid="tableName"></include>
+		(
+		ELECTRICAL_ROOM_ID,
+		EQUIPMENT_NAME,
+		EQUIPMENT_CODE,
+		LOOP_NAME,
+		INSTALLATION_POSITION,
+		EQUIPMENT_VERSION,
+		RATED_CURRENT,
+		RATED_VOLTAGE,
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		IF_INTO_LINE,
+		TRANSFORMER_ID,
+		CREATOR,
+		CREATE_TIME,
+		UPDATER,
+		UPDATE_TIME,
+		DELETED
+		) values (
+	<include refid="FieldValue"></include>
+		)
+	</insert>
+	
+	<!-- 删除-->
+	<delete id="delete" parameterType="pd">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="edit" parameterType="pd">
+		update
+		<include refid="tableName"></include>
+		set 
+			ELECTRICAL_ROOM_ID = #{ELECTRICAL_ROOM_ID},
+			EQUIPMENT_NAME = #{EQUIPMENT_NAME},
+			EQUIPMENT_CODE = #{EQUIPMENT_CODE},
+			LOOP_NAME = #{LOOP_NAME},
+			INSTALLATION_POSITION = #{INSTALLATION_POSITION},
+			EQUIPMENT_VERSION = #{EQUIPMENT_VERSION},
+			RATED_CURRENT = #{RATED_CURRENT},
+			RATED_VOLTAGE = #{RATED_VOLTAGE},
+			MAKE_TIME = #{MAKE_TIME},
+			BRAND = #{BRAND},
+			MANUFACTURER = #{MANUFACTURER},
+		    TRANSFORMER_ID = #{TRANSFORMER_ID},
+			IF_INTO_LINE = #{IF_INTO_LINE},
+		    UPDATER = #{UPDATER},
+		    UPDATE_TIME = #{UPDATE_TIME},
+		where 
+		ID = #{ID}
+	</update>
+	
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</select>
+	
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		select
+		hpc.ID,
+		hpc.EQUIPMENT_NAME,
+		hpc.EQUIPMENT_CODE,
+		hpc.LOOP_NAME,
+		hpc.INSTALLATION_POSITION,
+		hpc.EQUIPMENT_VERSION,
+		hpc.RATED_CURRENT,
+		hpc.RATED_VOLTAGE,
+		hpc.MAKE_TIME,
+		hpc.BRAND,
+		hpc.MANUFACTURER,
+		hpc.IF_INTO_LINE,
+		r.ELECTRICAL_ROOM_NAME
+		,t.EQUIPMENT_NAME as TRANSFORMER_NAME
+		from
+		EQU_HIGH_PRESSURE_CABINET hpc
+		left join ELECTRICAL_ROOM r on r.room_id=hpc.ELECTRICAL_ROOM_ID
+		left join EQU_TRANSFORMER t on hpc.TRANSFORMER_ID=t.ID
+		where 1=1
+		<if test="pd.keywords!= null and pd.keywords != ''"><!-- 关键词检索 -->
+			and
+				(
+			      hpc.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				<!--	根据需求自己加检索条件
+					字段1 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+					 or 
+					字段2 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				-->
+				)
+		</if>
+		order by hpc.UPDATE_TIME desc
+	</select>
+	
+	<!-- 列表(全部) -->
+	<select id="listAll" parameterType="pd" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+	</select>
+
+	<!-- 列表(全部) -->
+	<select id="listByCustomerId" parameterType="pd" resultType="pd">
+		select h.ID,h.EQUIPMENT_NAME
+		from EQU_HIGH_PRESSURE_CABINET h
+	</select>
+
+
+	<!-- 批量删除 -->
+	<delete id="deleteAll" parameterType="String">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID in
+		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">
+                 #{item}
+		</foreach>
+	</delete>
+
+</mapper>

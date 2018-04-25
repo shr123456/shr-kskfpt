@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TransformerMapper">
+    <!--&lt;!&ndash;表名 &ndash;&gt;-->
+    <!--<sql id="tableName">-->
+        <!--temperature_gathering-->
+    <!--</sql>-->
+
+    <!--&lt;!&ndash; 字段 &ndash;&gt;-->
+    <!--<sql id="Field">-->
+        <!--A_PHASE_TEMPERATURE,-->
+        <!--B_PHASE_TEMPERATURE,-->
+        <!--C_PHASE_TEMPERATURE,-->
+        <!--TRANSFORMER_ID,-->
+        <!--COLLECT_TIME-->
+    <!--</sql>-->
+
+    <!--&lt;!&ndash; 字段值 &ndash;&gt;-->
+    <!--<sql id="FieldValue">-->
+        <!--#{A_PHASE_TEMPERATURE},-->
+        <!--#{B_PHASE_TEMPERATURE},-->
+        <!--#{C_PHASE_TEMPERATURE},-->
+        <!--#{TRANSFORMER_ID},-->
+        <!--#{COLLECT_TIME}-->
+    <!--</sql>-->
+
+    <select id="findElectricity" parameterType="pd" resultType="pd">
+        SELECT
+        AVG(total_p_at_ee) AS total_p_at_ee,
+        <if test="dataType==1"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%h') AS collect_time
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%m-%d') AS collect_time
+        </if>
+        FROM
+        collect_base_info_lowpressure
+        WHERE
+        <if test="dataType==1"><!-- 按日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==2"><!-- 按7日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL -6 DAY
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==3"><!-- 按月查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 MONTH
+        </if>
+        <!--AND  collect_time < str_to_date(NOW(),'%Y-%m-%d %H')-->
+        AND equipment_id = #{equlowid}
+        <if test="dataType==1"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d %h')
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d')
+        </if>
+    </select>
+    <select id="findThreePhaseTemperature" parameterType="pd" resultType="pd">
+        SELECT
+        AVG(a_winding_temperature) AS a_winding_temperature,
+        AVG(b_winding_temperature) AS b_winding_temperature,
+        AVG(c_winding_temperature) AS c_winding_temperature,
+        AVG(a_core_temperature) AS a_core_temperature,
+        AVG(b_core_temperature) AS b_core_temperature,
+        AVG(c_core_temperature) AS c_core_temperature,
+        <if test="dataType==1"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%h') AS collect_time
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%m-%d') AS collect_time
+        </if>
+        FROM
+        temperature_gathering
+        WHERE
+        <if test="dataType==1"><!-- 按日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==2"><!-- 按7日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL -6 DAY
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==3"><!-- 按月查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 MONTH
+        </if>
+        <!--AND  collect_time < str_to_date(NOW(),'%Y-%m-%d %H')-->
+        AND transformer_id = #{id}
+        <if test="dataType==1"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d %h')
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d')
+        </if>
+    </select>
+    <!-- 获取总数 -->
+    <select id="selectListeqlow" parameterType="page" resultType="pd">
+        select * from equ_transformer WHERE DELETED =0 ORDER BY create_time DESC
+    </select>
+    <!-- 获取最新的设备 -->
+    <select id="selEquTransNewId" parameterType="page" resultType="pd">
+        select id,equipment_name from equ_transformer WHERE create_time=(SELECT  MAX(create_time) FROM equ_transformer) AND deleted=0
+    </select>
+    <!-- 获取根据变压器id获取低压柜id设备 -->
+    <select id="selectEquLowIdById" parameterType="page" resultType="pd">
+        SELECT elpc.ID AS id, et.capacity as capacity from equ_low_pressure_cabinet elpc
+        LEFT JOIN  equ_transformer et on et.id=elpc.transformer_id
+        WHERE et.id=#{id}
+        AND elpc.deleted=0
+    </select>
+</mapper>

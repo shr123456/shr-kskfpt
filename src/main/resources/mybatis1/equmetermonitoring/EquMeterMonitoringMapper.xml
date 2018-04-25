@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquMeterMonitoringMapper">
+
+	<!-- 通过ID获取数据 -->
+	<select id="getMeterListMonitoringByCustomerIdDemo" parameterType="pd" resultType="pd">
+		Select a.* from(select l.EQUIPMENT_NAME,l.IF_INTO_LINE,r.ELECTRICAL_ROOM_NAME,bil.COLLECT_TIME,bil.EQUIPMENT_ID,
+		bil.TOTAL_P_AT_EE,bil.A_ELECTRICITY,bil.B_ELECTRICITY,bil.C_ELECTRICITY,bil.A_VOLTAGE,bil.B_VOLTAGE,bil.C_VOLTAGE,
+		bil.TOTAL_POWER_FACTOR,bil.TOTAL_ACTIVE_POWER,bil.TOTAL_REACTIVE_POWER
+		from COLLECT_BASE_INFO_LOWPRESSURE bil
+		left join EQU_LOW_PRESSURE_CABINET l on bil.EQUIPMENT_ID=l.ID
+		left join ELECTRICAL_ROOM r on r.ROOM_ID=l.ELECTRICAL_ROOM_ID
+		where r.CUSTOMER_ID=#{CUSTOMER_ID}
+	    group by COLLECT_TIME
+	    order by bil.COLLECT_TIME desc)a
+		group by a.EQUIPMENT_ID
+	</select>
+
+	<resultMap type="ElectricalRoomMeter" id="electricalRoomMeter">
+		<id column="EQU_ID" property="EQU_ID"/>
+		<result column="EQU_TYPE" property="EQU_TYPE"/>
+		<result column="METER_NAME" property="METER_NAME"/>
+		<result column="GATEWAY_NO" property="GATEWAY_NO"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+	</resultMap>
+
+	<resultMap type="EquMeterMonitoring" id="equMeterMonitoring">
+		<id column="ID" property="ID"/>
+		<result column="TOTAL_P_AT_EE" property="TOTAL_P_AT_EE"/>
+		<result column="A_ELECTRICITY" property="A_ELECTRICITY"/>
+		<result column="B_ELECTRICITY" property="B_ELECTRICITY"/>
+		<result column="C_ELECTRICITY" property="C_ELECTRICITY"/>
+		<result column="A_VOLTAGE" property="A_VOLTAGE"/>
+		<result column="B_VOLTAGE" property="B_VOLTAGE"/>
+		<result column="C_VOLTAGE" property="C_VOLTAGE"/>
+		<result column="UAB_LINE_VOLTAGE" property="UAB_LINE_VOLTAGE"/>
+		<result column="UBC_LINE_VOLTAGE" property="UBC_LINE_VOLTAGE"/>
+		<result column="UAC_LINE_VOLTAGE" property="UAC_LINE_VOLTAGE"/>
+		<result column="TOTAL_POWER_FACTOR" property="TOTAL_POWER_FACTOR"/>
+		<result column="TOTAL_ACTIVE_POWER" property="TOTAL_ACTIVE_POWER"/>
+		<result column="TOTAL_REACTIVE_POWER" property="TOTAL_REACTIVE_POWER"/>
+		<result column="FREQUENCY" property="FREQUENCY"/>
+		<result column="TOTAL_AP_REAT_EE" property="TOTAL_AP_REAT_EE"/>
+		<result column="TEMPERATURE_ON_TYPE" property="TEMPERATURE_ON_TYPE"/>
+		<result column="IF_INTO_LINE" property="IF_INTO_LINE"/>
+		<result column="EQUIPMENT_NAME" property="EQUIPMENT_NAME"/>
+		<result column="METER_NAME" property="METER_NAME"/>
+		<result column="EQU_TYPE" property="EQU_TYPE"/>
+		<result column="GATEWAY_NO" property="GATEWAY_NO"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+		<result column="METER_ID" property="METER_ID"/>
+	</resultMap>
+
+	<!-- 通过ID获取数据 (低压)-->
+	<select id="getSmartMeterListByCustomerId" parameterType="String" resultMap="electricalRoomMeter">
+		select m.EQU_ID,m.EQU_TYPE,m.METER_NAME,m.GATEWAY_NO,r.ELECTRICAL_ROOM_NAME from EQU_SMART_METER m
+		left join ELECTRICAL_ROOM r on r.ROOM_ID=m.ELECTRICAL_ROOM_ID
+		where CUSTOMER_ID=#{CUSTOMER_ID}
+	</select>
+
+	<select id="getMeterListMonitoringByCustomerId" parameterType="pd" resultType="equMeterMonitoring">
+	    select a.* from(select l.id,l.EQUIPMENT_NAME,l.IF_INTO_LINE,bil.COLLECT_TIME,
+		bil.TOTAL_P_AT_EE,bil.A_ELECTRICITY,bil.B_ELECTRICITY,bil.C_ELECTRICITY,bil.A_VOLTAGE,bil.B_VOLTAGE,bil.C_VOLTAGE,
+		bil.UAB_LINE_VOLTAGE,bil.UBC_LINE_VOLTAGE,bil.UAC_LINE_VOLTAGE,
+		bil.TOTAL_POWER_FACTOR,bil.TOTAL_ACTIVE_POWER,bil.TOTAL_REACTIVE_POWER,bil.FREQUENCY,bil.TOTAL_AP_REAT_EE,bil.TEMPERATURE_ON_TYPE,
+		m.EQU_ID,m.EQU_TYPE,m.METER_NAME,m.GATEWAY_NO,m.id as METER_ID,r.ELECTRICAL_ROOM_NAME,m.C_T_RATIO
+		from COLLECT_BASE_INFO bil
+		<if test="equ_type==2">
+		    left join EQU_LOW_PRESSURE_CABINET l on bil.EQUIPMENT_ID=l.ID
+		</if>
+		<if test="equ_type==1">
+			left join EQU_HIGH_PRESSURE_CABINET l on bil.EQUIPMENT_ID=l.ID
+		</if>
+		left join EQU_SMART_METER m  on m.EQU_ID=l.ID
+		left join electrical_room r on m.electrical_room_id=r.room_id
+		where l.ID in(
+			select m.EQU_ID
+			from EQU_SMART_METER m
+
+			where 1=1
+
+			<if test="equ_type==2">
+					and m.EQU_TYPE=2
+			</if>
+			<if test="equ_type==1">
+					and m.EQU_TYPE=1
+			</if>
+		)
+		and l.IF_INTO_LINE=1
+
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and m.METER_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="keyno!= null and keyno != ''"><!-- 关键词检索 -->
+			and m.GATEWAY_NO LIKE CONCAT(CONCAT('%', #{keyno}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+
+		group by COLLECT_TIME
+	    order by bil.COLLECT_TIME desc)a
+		group by a.ID
+	</select>
+
+	<select id="getMeterListMonitoringOwn" parameterType="pd" resultType="equMeterMonitoring">
+		SELECT * from (select m.ID,i.COLLECT_TIME,
+		i.TOTAL_P_AT_EE,i.A_ELECTRICITY,i.B_ELECTRICITY,i.C_ELECTRICITY,i.A_VOLTAGE,i.B_VOLTAGE,i.C_VOLTAGE,
+		i.UAB_LINE_VOLTAGE,i.UBC_LINE_VOLTAGE,i.UAC_LINE_VOLTAGE,
+		i.TOTAL_POWER_FACTOR,i.TOTAL_ACTIVE_POWER,i.TOTAL_REACTIVE_POWER,i.FREQUENCY,i.TOTAL_AP_REAT_EE,i.TEMPERATURE_ON_TYPE,
+		m.EQU_ID,m.EQU_TYPE,m.METER_NAME,m.GATEWAY_NO,r.ELECTRICAL_ROOM_NAME,m.C_T_RATIO
+		from equ_smart_meter m
+		left join collect_base_info i on m.id=i.equipment_id
+		left join electrical_room r on m.electrical_room_id=r.room_id
+		where m.equ_type=0
+
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and m.METER_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="keyno!= null and keyno != ''"><!-- 关键词检索 -->
+			and m.GATEWAY_NO LIKE CONCAT(CONCAT('%', #{keyno}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+
+		group by i.COLLECT_TIME
+		order by i.COLLECT_TIME desc
+		)a
+		GROUP BY a.id
+	</select>
+
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select
+		ID,
+		METER_NAME,
+		METER_ADDRESS,
+		GATEWAY_NO,
+		GATEWAY_MODEL,
+		GATEWAY_FACTORY,
+		EQU_TYPE,
+		r.ELECTRICAL_ROOM_NAME
+		,datediff(now(),m.create_time) as USE_TIME
+		from
+		EQU_SMART_METER m
+		left join electrical_room r on r.room_id=ELECTRICAL_ROOM_ID
+		where
+		ID = #{ID}
+	</select>
+
+
+</mapper>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PowerOutagesMapper">
+	
+	<!--表名 -->
+	<sql id="tableName">
+		alarm_power_outages
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+		METER_ID,
+		CONTENT,	
+		CREATOR,	
+		CREATE_TIME,	
+		DELETED,	
+		POWEROUTAGES_ID
+	</sql>
+	
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{METER_ID},
+		#{CONTENT},	
+		#{CREATOR},	
+		#{CREATE_TIME},	
+		#{DELETED},	
+		#{POWEROUTAGES_ID}
+	</sql>
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		SELECT al.*,esm.meter_name,esm.meter_address,esm.gateway_no from alarm_power_outages al
+		LEFT JOIN equ_smart_meter esm ON  esm.id = al.METER_ID WHERE 1=1
+		<if test="pd.keywords1!= null and pd.keywords1 != ''"><!-- 关键词检索 -->
+			AND
+			(
+			esm.meter_name LIKE CONCAT(CONCAT('%', #{pd.keywords1}),'%')
+			)
+		</if>
+		<if test="pd.keywords2!= null and pd.keywords2 != ''"><!-- 关键词检索 -->
+			AND
+			(
+			esm.meter_address LIKE CONCAT(CONCAT('%', #{pd.keywords2}),'%')
+			)
+		</if>
+		<if test="pd.keywords3!= null and pd.keywords3 != ''"><!-- 关键词检索 -->
+			AND
+			(
+			esm.gateway_no LIKE CONCAT(CONCAT('%', #{pd.keywords3}),'%')
+			)
+		</if>
+	</select>
+	<!-- 修改状态 -->
+	<update id="editTag" parameterType="pd">
+		UPDATE alarm_power_outages
+		SET TAG=#{num}
+		WHERE POWEROUTAGES_ID=#{POWEROUTAGES_ID}
+	</update>
+</mapper>

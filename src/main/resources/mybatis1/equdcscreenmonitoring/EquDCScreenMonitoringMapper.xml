@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquDCScreenMonitoringMapper">
+
+	<resultMap type="EquDCScreenMonitoring" id="equDCScreenMonitoring">
+		<id column="ID" property="ID"/>
+		<result column="EQUIPMENT_NAME" property="EQUIPMENT_NAME"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+
+		<result column="MOTHER_CONTROL_UNDERVOLTAGE" property="MOTHER_CONTROL_UNDERVOLTAGE"/>
+		<result column="MOTHER_CONTROL_OVERVOLTAGE" property="MOTHER_CONTROL_OVERVOLTAGE"/>
+		<result column="MOTHER_CONTROL_ELECTRICITY" property="MOTHER_CONTROL_ELECTRICITY"/>
+		<result column="MOTHER_CONTROL_VOLTAGE" property="MOTHER_CONTROL_VOLTAGE"/>
+
+		<result column="MOTHER_CLOSING_VOLTAGE" property="MOTHER_CONTROL_UNDERVOLTAGE"/>
+		<result column="MOTHER_CLOSING_UNDERVOLTAGE" property="MOTHER_CONTROL_OVERVOLTAGE"/>
+		<result column="MOTHER_CLOSING_OVERVOLTAGE" property="MOTHER_CONTROL_ELECTRICITY"/>
+		<result column="MOTHER_CLOSING_ELECTRICITY" property="MOTHER_CONTROL_VOLTAGE"/>
+
+		<result column="RECHARGEABLE_BATTERY_CURRENT" property="RECHARGEABLE_BATTERY_CURRENT"/>
+		<result column="BATTERY_VOLTAGE_ONE" property="BATTERY_VOLTAGE_ONE"/>
+		<result column="BATTERY_VOLTAGE_TWO" property="BATTERY_VOLTAGE_TWO"/>
+		<result column="BATTERY_TEMPERATURE_ONE" property="BATTERY_TEMPERATURE_ONE"/>
+		<result column="BATTERY_TEMPERATURE_TWO" property="BATTERY_TEMPERATURE_TWO"/>
+
+		<result column="UPS_WORK" property="UPS_WORK"/>
+		<result column="FAILURE_STATE" property="FAILURE_STATE"/>
+		<result column="VOLTAGE_LEVEL" property="VOLTAGE_LEVEL"/>
+	</resultMap>
+
+
+	<!-- 通过ID获取直流屏数据 -->
+	<select id="getDCMonitoringList" parameterType="pd" resultType="equDCScreenMonitoring">
+		select dc.ID,dc.EQUIPMENT_NAME,r.ELECTRICAL_ROOM_NAME
+		,MOTHER_CONTROL_UNDERVOLTAGE,MOTHER_CONTROL_OVERVOLTAGE,MOTHER_CONTROL_ELECTRICITY,MOTHER_CONTROL_VOLTAGE
+		,MOTHER_CLOSING_VOLTAGE,MOTHER_CLOSING_UNDERVOLTAGE,MOTHER_CLOSING_OVERVOLTAGE,MOTHER_CLOSING_ELECTRICITY
+		,RECHARGEABLE_BATTERY_CURRENT,BATTERY_VOLTAGE_ONE,BATTERY_VOLTAGE_TWO,BATTERY_TEMPERATURE_ONE,BATTERY_TEMPERATURE_TWO
+		,UPS_WORK,FAILURE_STATE,VOLTAGE_LEVEL
+		from equ_dc_screen dc
+		left join electrical_room r on r.room_id=dc.electrical_room_id
+		left join collect_base_info_dcpanel idc on dc.id=idc.dc_panel_id
+
+        where 1=1
+
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and dc.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+		<if test="dataType==1"><!-- 按日查询 -->
+			AND idc.collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+			AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+		</if>
+		<if test="dataType==2"><!-- 按7日查询 -->
+			AND idc.collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL -6 DAY
+			AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+		</if>
+		<if test="dataType==3"><!-- 按月查询 -->
+			AND idc.collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+			AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 MONTH
+		</if>
+
+		group by dc.id
+		order by idc.collect_time desc
+	</select>
+
+
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+	    select
+		ID,
+		EQUIPMENT_NAME,
+		INSTALLATION_POSITION,
+		EQUIPMENT_VERSION,
+		BATTERY_CAPACITY,
+		INPUT_VOLTAGE,
+		OUTPUT_VOLTAGE,
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		r.ELECTRICAL_ROOM_NAME
+		from
+		EQU_DC_SCREEN dc
+		left join electrical_room r on r.room_id=ELECTRICAL_ROOM_ID
+		where
+		ID = #{ID}
+	</select>
+
+</mapper>

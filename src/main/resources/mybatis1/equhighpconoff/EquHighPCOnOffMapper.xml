@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquHighPCOnOffMapper">
+	
+	<!--表名 -->
+	<sql id="tableName">
+		EQU_HIGH_PRESSURE_CABINET_ONOFF
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+        ID,
+		HIGH_PC_ID,	
+		EQUIPMENT_NAME,	
+		EQUIPMENT_CODE,	
+		INSTALLATION_POSITION,	
+		EQUIPMENT_VERSION,	
+		RATED_CURRENT,	
+		RATED_VOLTAGE,	
+		MAKE_TIME,	
+		BRAND,	
+		MANUFACTURER,	
+		CREATOR,	
+		CREATE_TIME,	
+		UPDATER,	
+		UPDATE_TIME,	
+		DELETED
+	</sql>
+	
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{HIGH_PC_ID},	
+		#{EQUIPMENT_NAME},	
+		#{EQUIPMENT_CODE},	
+		#{INSTALLATION_POSITION},	
+		#{EQUIPMENT_VERSION},	
+		#{RATED_CURRENT},	
+		#{RATED_VOLTAGE},	
+		#{MAKE_TIME},	
+		#{BRAND},	
+		#{MANUFACTURER},	
+		#{CREATOR},	
+		#{CREATE_TIME},	
+		#{UPDATER},	
+		#{UPDATE_TIME},	
+		#{DELETED}
+	</sql>
+	
+	<!-- 新增-->
+	<insert id="save" parameterType="pd">
+		insert into 
+	<include refid="tableName"></include>
+		(
+		HIGH_PC_ID,
+		EQUIPMENT_NAME,
+		EQUIPMENT_CODE,
+		INSTALLATION_POSITION,
+		EQUIPMENT_VERSION,
+		RATED_CURRENT,
+		RATED_VOLTAGE,
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		CREATOR,
+		CREATE_TIME,
+		UPDATER,
+		UPDATE_TIME,
+		DELETED
+		) values (
+	<include refid="FieldValue"></include>
+		)
+	</insert>
+	
+	<!-- 删除-->
+	<delete id="delete" parameterType="pd">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="edit" parameterType="pd">
+		update
+		<include refid="tableName"></include>
+		set 
+			HIGH_PC_ID = #{HIGH_PC_ID},
+			EQUIPMENT_NAME = #{EQUIPMENT_NAME},
+			EQUIPMENT_CODE = #{EQUIPMENT_CODE},
+			INSTALLATION_POSITION = #{INSTALLATION_POSITION},
+			EQUIPMENT_VERSION = #{EQUIPMENT_VERSION},
+			RATED_CURRENT = #{RATED_CURRENT},
+			RATED_VOLTAGE = #{RATED_VOLTAGE},
+			MAKE_TIME = #{MAKE_TIME},
+			BRAND = #{BRAND},
+			MANUFACTURER = #{MANUFACTURER},
+		    UPDATER = #{UPDATER},
+		    UPDATE_TIME = #{UPDATE_TIME}
+		where 
+		ID = #{ID}
+	</update>
+	
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select 
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</select>
+	
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		select
+			pcof.ID,
+			pcof.EQUIPMENT_NAME,
+			pcof.EQUIPMENT_CODE,
+			pcof.INSTALLATION_POSITION,
+			pcof.EQUIPMENT_VERSION,
+			pcof.RATED_CURRENT,
+			pcof.RATED_VOLTAGE,
+			pcof.MAKE_TIME,
+			pcof.BRAND,
+			pcof.MANUFACTURER
+		    ,pc.EQUIPMENT_NAME as HPC_NAME
+		from
+		  EQU_HIGH_PRESSURE_CABINET_ONOFF pcof
+		  left join EQU_HIGH_PRESSURE_CABINET pc on pcof.HIGH_PC_ID=pc.ID
+		where 1=1
+		<if test="pd.keywords!= null and pd.keywords != ''"><!-- 关键词检索 -->
+			and
+				(
+			        pcof.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				<!--	根据需求自己加检索条件
+					字段1 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+					 or 
+					字段2 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				-->
+				)
+		</if>
+		order by pcof.UPDATE_TIME desc
+	</select>
+	
+	<!-- 列表(全部) -->
+	<select id="listAll" parameterType="pd" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+	</select>
+	
+	<!-- 批量删除 -->
+	<delete id="deleteAll" parameterType="String">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID in
+		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">
+                 #{item}
+		</foreach>
+	</delete>
+	
+	<!-- fh313596790qq(青苔) -->
+</mapper>

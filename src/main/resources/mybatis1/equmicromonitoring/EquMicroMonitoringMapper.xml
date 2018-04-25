@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquMicroMonitoringMapper">
+
+	<resultMap type="EquMicroMonitoring" id="equMicroMonitoring">
+		<id column="ID" property="ID"/>
+		<result column="EQUIPMENT_NAME" property="EQUIPMENT_NAME"/>
+		<result column="A_ELECTRICITY" property="A_ELECTRICITY"/>
+		<result column="B_ELECTRICITY" property="B_ELECTRICITY"/>
+		<result column="C_ELECTRICITY" property="C_ELECTRICITY"/>
+		<result column="A_VOLTAGE" property="A_VOLTAGE"/>
+		<result column="B_VOLTAGE" property="B_VOLTAGE"/>
+		<result column="C_VOLTAGE" property="C_VOLTAGE"/>
+		<result column="A_LOAD" property="A_LOAD"/>
+		<result column="B_LOAD" property="B_LOAD"/>
+		<result column="C_LOAD" property="C_LOAD"/>
+		<result column="UAB_LINE_VOLTAGE" property="UAB_LINE_VOLTAGE"/>
+		<result column="UBC_LINE_VOLTAGE" property="UBC_LINE_VOLTAGE"/>
+		<result column="UAC_LINE_VOLTAGE" property="UAC_LINE_VOLTAGE"/>
+		<result column="LOSS_PRESSURE_PROTECTION" property="LOSS_PRESSURE_PROTECTION"/>
+		<result column="OVERVOLTAGE_PROTECTION" property="OVERVOLTAGE_PROTECTION"/>
+
+		<result column="OVERLOAD_PROTECTION" property="OVERLOAD_PROTECTION"/>
+		<result column="THREE_OVERCURRENT_PROTECTION" property="THREE_OVERCURRENT_PROTECTION"/>
+
+		<result column="Z_E_P_THRESHOLD" property="Z_E_P_THRESHOLD"/>
+		<result column="S_O_E" property="S_O_E"/>
+		<result column="ELECTRICAL_ROOM_NAME" property="ELECTRICAL_ROOM_NAME"/>
+
+	</resultMap>
+
+	<select id="getMicroMonitoringList" parameterType="pd" resultType="equMicroMonitoring">
+		select * from
+		(
+		select  m.ID,bim.COLLECT_TIME,bim.A_ELECTRICITY,bim.B_ELECTRICITY,bim.C_ELECTRICITY,
+		bim.A_VOLTAGE,bim.B_VOLTAGE,bim.C_VOLTAGE,bim.A_LOAD,bim.B_LOAD,bim.C_LOAD,
+		bim.UAB_LINE_VOLTAGE,bim.UBC_LINE_VOLTAGE,bim.UAC_LINE_VOLTAGE,bim.THREE_OVERCURRENT_PROTECTION,bim.OVERLOAD_PROTECTION,
+		bim.LOSS_PRESSURE_PROTECTION,bim.OVERVOLTAGE_PROTECTION,bim.Z_E_P_THRESHOLD,bim.S_O_E,m.EQUIPMENT_NAME,r.ELECTRICAL_ROOM_NAME
+		from equ_micro_protection_device m
+		left join collect_base_info_micro bim on m.id=bim.equipment_id
+		left join electrical_room r on r.room_id=m.electrical_room_id
+
+		where 1=1
+		<if test="keywords!= null and keywords != ''"><!-- 关键词检索 -->
+			and m.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{keywords}),'%')
+		</if>
+		<if test="ELECTRICAL_ROOM_ID!= null and ELECTRICAL_ROOM_ID != ''"><!-- 关键词检索 -->
+			and r.room_id = #{ELECTRICAL_ROOM_ID}
+		</if>
+		
+		group by bim.COLLECT_TIME
+		order by bim.COLLECT_TIME desc
+		)a
+		GROUP BY a.id
+	</select>
+
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select
+		ID,
+		EQUIPMENT_NAME,
+		EQUIPMENT_VERSION,
+		BRAND,
+		MAKE_TIME,
+		MANUFACTURER,
+		SUPPLY_VOLTAGE,
+		r.ELECTRICAL_ROOM_NAME
+        from equ_micro_protection_device m
+		left join electrical_room r on r.room_id=ELECTRICAL_ROOM_ID
+		where
+		ID = #{ID}
+	</select>
+
+
+
+</mapper>

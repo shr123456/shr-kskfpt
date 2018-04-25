@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DcPanelMapper">
+    <select id="findDcPanelList" parameterType="pd" resultType="pd">
+        SELECT
+        AVG(mother_control_undervoltage) AS mother_control_undervoltage,
+        AVG(mother_control_overvoltage) AS mother_control_overvoltage,
+        AVG(mother_control_electricity) AS mother_control_electricity,
+        AVG(mother_control_voltage) AS mother_control_voltage,
+        AVG(mother_closing_voltage) AS mother_closing_voltage,
+        AVG(mother_closing_undervoltage) AS mother_closing_undervoltage,
+        AVG(mother_closing_overvoltage) AS mother_closing_overvoltage,
+        AVG(mother_closing_electricity) AS mother_closing_electricity,
+        AVG(rechargeable_battery_current) AS rechargeable_battery_current,
+        <if test="dataType==1"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%h') AS collect_time
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            DATE_FORMAT(collect_time, '%m-%d') AS collect_time
+        </if>
+        FROM
+        collect_base_info_dcpanel
+        WHERE
+        <if test="dataType==1"><!-- 按日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==2"><!-- 按7日查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL -6 DAY
+            AND str_to_date(#{DataTime}, '%Y-%m-%d') + INTERVAL 1 DAY
+        </if>
+        <if test="dataType==3"><!-- 按月查询 -->
+            collect_time BETWEEN str_to_date(#{DataTime}, '%Y-%m-%d')
+            AND str_to_date(#{DataTime}, '%Y-%m-%d')+ INTERVAL 1 MONTH
+        </if>
+        <!--AND  collect_time < str_to_date(NOW(),'%Y-%m-%d %H')-->
+        AND dc_panel_id = #{id}
+        <if test="dataType==1"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d %h')
+        </if>
+        <if test="dataType==2 || dataType==3"><!-- 按日查询 -->
+            GROUP BY DATE_FORMAT(collect_time, '%Y-%m-%d')
+        </if>
+    </select>
+    <!-- 获取总数 -->
+    <select id="selListEquDcSreen" parameterType="page" resultType="pd">
+        select * from equ_dc_screen WHERE DELETED =0 ORDER BY create_time DESC
+    </select>
+    <!-- 获取最新的设备 -->
+    <select id="selEquDcSreenNewId" parameterType="page" resultType="pd">
+        select id,equipment_name from equ_dc_screen WHERE create_time=(SELECT  MAX(create_time) FROM equ_dc_screen) AND deleted=0
+    </select>
+</mapper>

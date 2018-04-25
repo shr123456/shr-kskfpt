@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EquDCScreenMapper">
+	
+	<!--表名 -->
+	<sql id="tableName">
+		EQU_DC_SCREEN
+	</sql>
+	
+	<!-- 字段 -->
+	<sql id="Field">
+		ID,	
+		ELECTRICAL_ROOM_ID,	
+		EQUIPMENT_NAME,	
+		INSTALLATION_POSITION,	
+		EQUIPMENT_VERSION,	
+		BATTERY_CAPACITY,	
+		INPUT_VOLTAGE,	
+		OUTPUT_VOLTAGE,	
+		MAKE_TIME,	
+		BRAND,	
+		MANUFACTURER,	
+		CREATOR,	
+		CREATE_TIME,	
+		UPDATER,	
+		UPDATE_TIME,	
+		DELETED
+	</sql>
+	
+	<!-- 字段值 -->
+	<sql id="FieldValue">
+		#{ELECTRICAL_ROOM_ID},	
+		#{EQUIPMENT_NAME},	
+		#{INSTALLATION_POSITION},	
+		#{EQUIPMENT_VERSION},	
+		#{BATTERY_CAPACITY},	
+		#{INPUT_VOLTAGE},	
+		#{OUTPUT_VOLTAGE},	
+		#{MAKE_TIME},	
+		#{BRAND},	
+		#{MANUFACTURER},	
+		#{CREATOR},	
+		#{CREATE_TIME},	
+		#{UPDATER},	
+		#{UPDATE_TIME},	
+		#{DELETED}
+	</sql>
+	
+	<!-- 新增-->
+	<insert id="save" parameterType="pd">
+		insert into 
+	<include refid="tableName"></include>
+		(
+		ELECTRICAL_ROOM_ID,
+		EQUIPMENT_NAME,
+		INSTALLATION_POSITION,
+		EQUIPMENT_VERSION,
+		BATTERY_CAPACITY,
+		INPUT_VOLTAGE,
+		OUTPUT_VOLTAGE,
+		MAKE_TIME,
+		BRAND,
+		MANUFACTURER,
+		CREATOR,
+		CREATE_TIME,
+		UPDATER,
+		UPDATE_TIME,
+		DELETED
+		) values (
+	<include refid="FieldValue"></include>
+		)
+	</insert>
+	
+	<!-- 删除-->
+	<delete id="delete" parameterType="pd">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</delete>
+	
+	<!-- 修改 -->
+	<update id="edit" parameterType="pd">
+		update
+		<include refid="tableName"></include>
+		set 
+			ELECTRICAL_ROOM_ID = #{ELECTRICAL_ROOM_ID},
+			EQUIPMENT_NAME = #{EQUIPMENT_NAME},
+			INSTALLATION_POSITION = #{INSTALLATION_POSITION},
+			EQUIPMENT_VERSION = #{EQUIPMENT_VERSION},
+			BATTERY_CAPACITY = #{BATTERY_CAPACITY},
+			INPUT_VOLTAGE = #{INPUT_VOLTAGE},
+			OUTPUT_VOLTAGE = #{OUTPUT_VOLTAGE},
+			MAKE_TIME = #{MAKE_TIME},
+			BRAND = #{BRAND},
+			MANUFACTURER = #{MANUFACTURER},
+			UPDATE_TIME = #{UPDATE_TIME},
+			DELETED = #{DELETED},
+			UPDATER = #{UPDATER},
+			UPDATE_TIME = #{UPDATE_TIME}
+		where 
+		ID = #{ID}
+	</update>
+	
+	<!-- 通过ID获取数据 -->
+	<select id="findById" parameterType="pd" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+		where 
+			ID = #{ID}
+	</select>
+	
+	<!-- 列表 -->
+	<select id="datalistPage" parameterType="page" resultType="pd">
+		select
+		dc.ID,
+		dc.EQUIPMENT_NAME,
+		dc.INSTALLATION_POSITION,
+		dc.EQUIPMENT_VERSION,
+		dc.BATTERY_CAPACITY,
+		dc.INPUT_VOLTAGE,
+		dc.OUTPUT_VOLTAGE,
+		dc.MAKE_TIME,
+		dc.BRAND,
+		dc.MANUFACTURER
+		,r.ELECTRICAL_ROOM_NAME
+		from
+		EQU_DC_SCREEN dc
+		left join ELECTRICAL_ROOM r on r.room_id=dc.ELECTRICAL_ROOM_ID
+		where 1=1
+		<if test="pd.keywords!= null and pd.keywords != ''"><!-- 关键词检索 -->
+			and
+				(
+			     dc.EQUIPMENT_NAME LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+				<!--	根据需求自己加检索条件
+					字段1 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%')
+					 or 
+					字段2 LIKE CONCAT(CONCAT('%', #{pd.keywords}),'%') 
+				-->
+				)
+		</if>
+		order by dc.UPDATE_TIME desc
+	</select>
+	
+	<!-- 列表(全部) -->
+	<select id="listAll" parameterType="pd" resultType="pd">
+		select
+		<include refid="Field"></include>
+		from 
+		<include refid="tableName"></include>
+	</select>
+	
+	<!-- 批量删除 -->
+	<delete id="deleteAll" parameterType="String">
+		delete from
+		<include refid="tableName"></include>
+		where 
+			ID in
+		<foreach item="item" index="index" collection="array" open="(" separator="," close=")">
+                 #{item}
+		</foreach>
+	</delete>
+	
+	<!-- fh313596790qq(青苔) -->
+</mapper>
